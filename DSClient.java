@@ -1,7 +1,7 @@
 /*
- * COMP3100: Assignment - Stage 2
+ * COMP3100: Assignment - Stage 1
  *
- * Author: Francisco Butturini
+ * Authors: Francisco Butturini
  *
  */
 
@@ -55,11 +55,11 @@ public class DSClient {
                 while (!msg.equals("NONE")) {
 
                     out.write(("REDY\n").getBytes());   // Ready for next job
-                    System.out.println("Sent REDY");
+                    //System.out.println("Sent REDY");
 
                     // Get the job
                     String job = in.readLine();
-                    System.out.println("Read this"+job);
+                    //System.out.println("Read this"+job);
                     String[] job_info = job.split(" ",0);
 
                     while (job_info[0].equals("JCPL")) {    // Disregard JCPL commands
@@ -71,14 +71,15 @@ public class DSClient {
                     if (job.equals("NONE")) {
                         break;
                     }
-                    System.out.println("About to enter handle with "+job);
-                    handleGETS(job_info,in,out);
+                    //System.out.println("About to enter handle with "+job);
+                    //handleGETS(job_info,in,out);
+                    avail(job_info,in,out);
                     // Prepare and send schedule command
                     //String job_schedule = "SCHD" + " " + job_info[2] + " " + server_max + " " + server_id + "\n";
                     //out.write(job_schedule.getBytes());
 
                     msg = in.readLine();
-                    System.out.println("msg is"+msg);
+                    //System.out.println("msg is"+msg);
                 }
             }
 
@@ -91,31 +92,42 @@ public class DSClient {
     }
 
     public static void handleGETS(String [] job,BufferedReader din, DataOutputStream dout) {
-        System.out.println("got into handle" +job[1]+job[2]+job[3]+job[4]+job[5]+job[6]);
+        //System.out.println("got into handle" +job[1]+job[2]+job[3]+job[4]+job[5]+job[6]);
         String in;
         String [] inarr;
         try{
             String capable="GETS Capable "+job[4]+" "+job[5]+" "+job[6]+"\n";
-            System.out.println("Sent "+capable);
+            //System.out.println("Sent "+capable);
             dout.write(capable.getBytes());
             in=din.readLine();
-            System.out.println("Read "+in);
+            //System.out.println("Read "+in);
             inarr=in.split(" ");
             dout.write("OK\n".getBytes());
             String [] capableArray = new String [Integer.parseInt(inarr[1])];
             for(int i=0;i<Integer.parseInt(inarr[1]);i++){
                capableArray[i]=din.readLine();
-               System.out.println("Read in loop "+capableArray[i]);
+               //System.out.println("Read in loop "+capableArray[i]);
             }
+
+            int bestIDX=0;
+            int bestCore=0;
+            for(int j=0;j<Integer.parseInt(inarr[1]);j++){
+                String [] test=capableArray[j].split(" ");
+                if(Integer.parseInt(test[4])<bestCore){
+                    bestIDX=j;
+                    bestCore=Integer.parseInt(test[4]);
+                }
+             }
+
             dout.write("OK\n".getBytes());
-            System.out.println("Sent OK!");
+            //System.out.println("Sent OK!");
             String check=din.readLine();// Negates the .
-            System.out.println(check+"!!!!!!!!!!");
-            String []capableServer=capableArray[0].split(" ");
+            //System.out.println(check+"!!!!!!!!!!");
+            String []capableServer=capableArray[bestIDX].split(" ");
             String job_schedule = "SCHD" + " " + job[2] + " " + capableServer[0] + " " + capableServer[1] + "\n";
-            System.out.println("Sending job"+job_schedule);
+            //System.out.println("Sending job"+job_schedule);
             dout.write(job_schedule.getBytes());
-            System.out.println("Getting outta handle");
+            //System.out.println("Getting outta handle");
 
         }
 
@@ -124,7 +136,60 @@ public class DSClient {
         }
     }
 
+    public static void avail(String [] job,BufferedReader din, DataOutputStream dout) {
+        String in;
+        String [] inarr;
+        try{
+            String avail="GETS Avail "+job[4]+" "+job[5]+" "+job[6]+"\n";
+            dout.write(avail.getBytes());
+            in=din.readLine();
+            //System.out.println(in);
+            inarr=in.split(" ");
+            //System.out.println(inarr[1]);
+            if(inarr[1].equals("0")){
+                //System.out.println("Entered loop!");
+                dout.write("OK\n".getBytes());
+                String check=din.readLine();//Negates the .
+                //System.out.println(check);
+                //System.out.println("!!!!passing to handle!!!!");
+                handleGETS(job, din, dout);
+                return;
+            }
+            //System.out.println("Didnt enter loop");
+            inarr=in.split(" ");
 
+            dout.write("OK\n".getBytes());
+
+            String [] capableArray = new String [Integer.parseInt(inarr[1])];
+            for(int i=0;i<Integer.parseInt(inarr[1]);i++){
+               capableArray[i]=din.readLine();
+               //System.out.println("Read in loop "+capableArray[i]);
+            }
+            int bestIDX=0;
+            int bestCore=0;
+            for(int j=0;j<Integer.parseInt(inarr[1]);j++){
+                String [] test=capableArray[j].split(" ");
+                if(Integer.parseInt(test[4])<bestCore){
+                    bestIDX=j;
+                    bestCore=Integer.parseInt(test[4]);
+                }
+             }
+
+            dout.write("OK\n".getBytes());
+
+            String check=din.readLine();// Negates the .
+
+            String []capableServer=capableArray[bestIDX].split(" ");
+            String job_schedule = "SCHD" + " " + job[2] + " " + capableServer[0] + " " + capableServer[1] + "\n";
+            //System.out.println("Sending job"+job_schedule);
+            dout.write(job_schedule.getBytes());
+            //System.out.println("Getting outta avail");
+
+        }
+        catch (Exception e) {
+            System.out.println(e);
+        }
+    }
 
 
 
