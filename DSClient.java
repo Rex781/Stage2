@@ -109,20 +109,22 @@ public class DSClient {
                //System.out.println("Read in loop "+capableArray[i]);
             }
 
-            int bestIDX=0;
-            int bestCore=0;
-            for(int j=0;j<Integer.parseInt(inarr[1]);j++){
-                String [] test=capableArray[j].split(" ");
-                if(Integer.parseInt(test[4])<bestCore){
-                    bestIDX=j;
-                    bestCore=Integer.parseInt(test[4]);
-                }
-             }
-
             dout.write("OK\n".getBytes());
             //System.out.println("Sent OK!");
             String check=din.readLine();// Negates the .
             //System.out.println(check+"!!!!!!!!!!");
+            int bestIDX=0;
+            int bestTime=0;
+            for(int j=0;j<Integer.parseInt(inarr[1]);j++){
+                String [] test=capableArray[j].split(" ");
+                String ejwt ="EJWT "+test[0]+" "+test[1]+"\n";
+                dout.write(ejwt.getBytes());
+                String reply = din.readLine();
+                if(Integer.parseInt(reply)<bestTime||j==0){
+                    bestIDX=j;
+                    bestTime=Integer.parseInt(reply);
+                }
+             }
             String []capableServer=capableArray[bestIDX].split(" ");
             String job_schedule = "SCHD" + " " + job[2] + " " + capableServer[0] + " " + capableServer[1] + "\n";
             //System.out.println("Sending job"+job_schedule);
