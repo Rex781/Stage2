@@ -1,7 +1,7 @@
 /*
- * COMP3100: Assignment - Stage 1
+ * COMP3100: Assignment - Stage 2
  *
- * Authors: Francisco Butturini
+ * Author: Francisco Butturini
  *
  */
 
@@ -171,7 +171,7 @@ public class DSClient {
             int bestCore=0;
             for(int j=0;j<Integer.parseInt(inarr[1]);j++){
                 String [] test=capableArray[j].split(" ");
-                if(Integer.parseInt(test[4])<bestCore){
+                if(Integer.parseInt(test[4])<bestCore||j==0){
                     bestIDX=j;
                     bestCore=Integer.parseInt(test[4]);
                 }
