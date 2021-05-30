@@ -17,6 +17,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.Element;
 
 
+
 public class DSClient {
     public static void main(String[] args) {
         Socket s = null;
@@ -55,11 +56,11 @@ public class DSClient {
                 while (!msg.equals("NONE")) {
 
                     out.write(("REDY\n").getBytes());   // Ready for next job
-                    //System.out.println("Sent REDY");
+
 
                     // Get the job
                     String job = in.readLine();
-                    //System.out.println("Read this"+job);
+
                     String[] job_info = job.split(" ",0);
 
                     while (job_info[0].equals("JCPL")) {    // Disregard JCPL commands
@@ -68,18 +69,14 @@ public class DSClient {
                         job_info = job.split(" ");
                     }
 
-                    if (job.equals("NONE")) {
+                    if (job.equals("NONE")) { //If no jobs are left, dont schedule and disconnect
                         break;
                     }
-                    //System.out.println("About to enter handle with "+job);
-                    //handleGETS(job_info,in,out);
+
+                    //Schedule a job through the algorythm
                     avail(job_info,in,out);
-                    // Prepare and send schedule command
-                    //String job_schedule = "SCHD" + " " + job_info[2] + " " + server_max + " " + server_id + "\n";
-                    //out.write(job_schedule.getBytes());
 
                     msg = in.readLine();
-                    //System.out.println("msg is"+msg);
                 }
             }
 
@@ -91,28 +88,28 @@ public class DSClient {
         }
     }
 
+    //If there are no available servers, schdule this job to the server with the least waiting time
     public static void handleGETS(String [] job,BufferedReader din, DataOutputStream dout) {
-        //System.out.println("got into handle" +job[1]+job[2]+job[3]+job[4]+job[5]+job[6]);
         String in;
         String [] inarr;
+
         try{
             String capable="GETS Capable "+job[4]+" "+job[5]+" "+job[6]+"\n";
-            //System.out.println("Sent "+capable);
             dout.write(capable.getBytes());
             in=din.readLine();
-            //System.out.println("Read "+in);
+
             inarr=in.split(" ");
             dout.write("OK\n".getBytes());
             String [] capableArray = new String [Integer.parseInt(inarr[1])];
+
             for(int i=0;i<Integer.parseInt(inarr[1]);i++){
                capableArray[i]=din.readLine();
-               //System.out.println("Read in loop "+capableArray[i]);
             }
 
             dout.write("OK\n".getBytes());
-            //System.out.println("Sent OK!");
+
             String check=din.readLine();// Negates the .
-            //System.out.println(check+"!!!!!!!!!!");
+
             int bestIDX=0;
             int bestTime=0;
             for(int j=0;j<Integer.parseInt(inarr[1]);j++){
@@ -120,17 +117,15 @@ public class DSClient {
                 String ejwt ="EJWT "+test[0]+" "+test[1]+"\n";
                 dout.write(ejwt.getBytes());
                 String reply = din.readLine();
-                if(Integer.parseInt(reply)<bestTime||j==0){
+
+                if(Integer.parseInt(reply)<bestTime||j==0){ //Sort and find the server with best EJWT
                     bestIDX=j;
                     bestTime=Integer.parseInt(reply);
                 }
              }
             String []capableServer=capableArray[bestIDX].split(" ");
             String job_schedule = "SCHD" + " " + job[2] + " " + capableServer[0] + " " + capableServer[1] + "\n";
-            //System.out.println("Sending job"+job_schedule);
-            dout.write(job_schedule.getBytes());
-            //System.out.println("Getting outta handle");
-
+            dout.write(job_schedule.getBytes()); //Schedule the job
         }
 
         catch (Exception e) {
@@ -138,38 +133,37 @@ public class DSClient {
         }
     }
 
+
+    //Schedules job based on get avail option
     public static void avail(String [] job,BufferedReader din, DataOutputStream dout) {
         String in;
         String [] inarr;
+
         try{
+
             String avail="GETS Avail "+job[4]+" "+job[5]+" "+job[6]+"\n";
             dout.write(avail.getBytes());
             in=din.readLine();
-            //System.out.println(in);
             inarr=in.split(" ");
-            //System.out.println(inarr[1]);
-            if(inarr[1].equals("0")){
-                //System.out.println("Entered loop!");
+
+            if(inarr[1].equals("0")){ // If there are no servers available then pass to other function which uses capable
                 dout.write("OK\n".getBytes());
                 String check=din.readLine();//Negates the .
-                //System.out.println(check);
-                //System.out.println("!!!!passing to handle!!!!");
                 handleGETS(job, din, dout);
                 return;
             }
-            //System.out.println("Didnt enter loop");
             inarr=in.split(" ");
 
             dout.write("OK\n".getBytes());
 
-            String [] capableArray = new String [Integer.parseInt(inarr[1])];
+            String [] capableArray = new String [Integer.parseInt(inarr[1])]; //Array of capable servers
             for(int i=0;i<Integer.parseInt(inarr[1]);i++){
                capableArray[i]=din.readLine();
-               //System.out.println("Read in loop "+capableArray[i]);
             }
+
             int bestIDX=0;
             int bestCore=0;
-            for(int j=0;j<Integer.parseInt(inarr[1]);j++){
+            for(int j=0;j<Integer.parseInt(inarr[1]);j++){  //Find the serever with the smallest core count
                 String [] test=capableArray[j].split(" ");
                 if(Integer.parseInt(test[4])<bestCore||j==0){
                     bestIDX=j;
@@ -182,10 +176,8 @@ public class DSClient {
             String check=din.readLine();// Negates the .
 
             String []capableServer=capableArray[bestIDX].split(" ");
-            String job_schedule = "SCHD" + " " + job[2] + " " + capableServer[0] + " " + capableServer[1] + "\n";
-            //System.out.println("Sending job"+job_schedule);
+            String job_schedule = "SCHD" + " " + job[2] + " " + capableServer[0] + " " + capableServer[1] + "\n"; //Schedule the job
             dout.write(job_schedule.getBytes());
-            //System.out.println("Getting outta avail");
 
         }
         catch (Exception e) {
